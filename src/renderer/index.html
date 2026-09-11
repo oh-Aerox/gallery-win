@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+      img-src 里的 https: 只为地图瓦片存在，而瓦片默认是关闭的（设置里手动开启）。
+      其余一律锁死：没有 eval、没有远程脚本、没有内联脚本。
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self';
+               script-src 'self';
+               style-src 'self' 'unsafe-inline';
+               img-src 'self' thumb: media: data: blob: https:;
+               media-src 'self' media: blob:;
+               font-src 'self' data:;
+               connect-src 'self' ws: http://localhost:*;
+               object-src 'none';
+               base-uri 'none';
+               form-action 'none'"
+    />
+    <title>本地相册</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./main.tsx"></script>
+  </body>
+</html>

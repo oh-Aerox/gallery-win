@@ -1,0 +1,43 @@
+appId: com.local.gallery
+productName: 本地相册
+copyright: Copyright © 2026
+
+directories:
+  output: dist
+  buildResources: build
+
+files:
+  - out/**/*
+  - package.json
+  - '!**/*.map'
+
+# 这些必须解包到 asar 之外，否则运行期直接失效：
+#   exiftool / ffmpeg 是要 spawn 的可执行文件，asar 里的路径不是真实文件路径；
+#   sharp 和 libheif 要在运行时按自身位置加载 .node / .wasm。
+asarUnpack:
+  - '**/node_modules/exiftool-vendored.exe/**'
+  - '**/node_modules/exiftool-vendored.pl/**'
+  - '**/node_modules/@ffmpeg-installer/**'
+  - '**/node_modules/@img/**'
+  - '**/node_modules/sharp/**'
+  - '**/node_modules/libheif-js/**'
+
+# 离线地名库：放 resources 根下，运行时用 process.resourcesPath 取
+extraResources:
+  - from: resources
+    to: .
+    filter: ['**/*']
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  artifactName: ${productName}-${version}-x64.${ext}
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: 本地相册
