@@ -14,11 +14,14 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "geo:build": "node scripts/build-geo-db.mjs",
-    "build:win": "npm run build && electron-builder --win --config electron-builder.yml",
+    "build:win": "npm run check:resources && npm run build && electron-builder --win --config electron-builder.yml",
     "fixtures": "node scripts/make-fixtures.mjs",
     "test:e2e": "node scripts/smoke.mjs",
     "test:ui": "node scripts/ui-check.mjs",
-    "verify": "npm run typecheck && npm run test && npm run build && npm run test:e2e && npm run test:ui"
+    "verify": "npm run typecheck && npm run test && npm run build && npm run test:e2e && npm run test:ui",
+    "check:resources": "node scripts/check-resources.mjs",
+    "clean": "node -e \"for (const d of ['out','dist']) require('node:fs').rmSync(d, { recursive: true, force: true })\"",
+    "build:dir": "npm run check:resources && npm run build && electron-builder --win --dir --config electron-builder.yml"
   },
   "dependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
@@ -48,5 +51,8 @@
     "vite": "^7.0.0",
     "vitest": "^3.2.0",
     "zustand": "^5.0.15"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
   }
 }

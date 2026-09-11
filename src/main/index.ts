@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { CHANNELS } from '@shared/api.js'
 import { Db } from './db/index.js'
-import { listFolders } from './db/queries.js'
+import { clearPlaces, listFolders } from './db/queries.js'
 import { registerIpc } from './ipc/handlers.js'
 import { endExifTool } from './meta/exiftool.js'
 import { dbPath, thumbCacheDir } from './paths.js'
@@ -41,6 +41,8 @@ async function bootstrap(): Promise<void> {
   initThumbCache(thumbCacheDir())
   log.info('数据库', dbPath())
 
+  migrateGeoData(db)
+
   pipeline = new Pipeline({
     db,
     emit: (p) => win?.webContents.send(CHANNELS.scanProgress, p),
@@ -55,6 +57,28 @@ async function bootstrap(): Promise<void> {
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
+}
+
+/**
+ * 地名库或命名规则变化后，把已有的地点分组作废重建。
+ *
+ * 地点是**派生数据**：它完全由照片的 GPS 坐标加上地名库算出来。所以只要底层
+ * 数据或规则改了（比如修掉了省份映射错位的 bug），就必须重算，不能让用户一直
+ * 看着错的省名，更不该要求他们自己去设置里找"重新聚类"按钮。
+ *
+ * 代价是用户给地点起的自定义名字会丢。这里认为值得：之前生成的名字本身就是错的。
+ */
+const GEO_DATA_VERSION = 2
+
+function migrateGeoData(db: Db): void {
+  const stored = db.getSetting<number>('geoDataVersion', 0)
+  if (stored === GEO_DATA_VERSION) return
+  const had = db.get<{ n: number }>('SELECT COUNT(*) n FROM places')?.n ?? 0
+  if (had > 0) {
+    clearPlaces(db)
+    log.info(`地名数据已更新（v${stored} -> v${GEO_DATA_VERSION}），作废 ${had} 个旧地点，稍后自动重建`)
+  }
+  db.setSetting('geoDataVersion', GEO_DATA_VERSION)
 }
 
 async function startupCatchUp(): Promise<void> {
